@@ -1,0 +1,44 @@
+# RAEIPHI — Occupancy Classification Inference Server
+# PyTorch 1D CNN model serving via FastAPI
+#
+# Build:  docker build -f Dockerfile.occupancy -t raeiphi-occupancy .
+# Run:    docker run -p 8000:8000 raeiphi-occupancy
+
+FROM python:3.12-slim
+
+WORKDIR /app
+
+# System deps
+RUN apt-get update && apt-get install -y --no-install-recommends \
+    build-essential \
+    && rm -rf /var/lib/apt/lists/*
+
+# Python deps — PyTorch CPU-only (much smaller than GPU build)
+RUN pip install --no-cache-dir \
+    torch --index-url https://download.pytorch.org/whl/cpu
+
+RUN pip install --no-cache-dir \
+    fastapi==0.115.0 \
+    "uvicorn[standard]==0.30.0" \
+    numpy \
+    pydantic
+
+# Copy model weights and feature config
+COPY models/best_pytorch_model.pt models/
+COPY data/feature_config.json data/
+
+# Copy server code
+COPY src/__init__.py src/
+COPY src/inference_server.py src/
+COPY src/prediction_logger.py src/
+
+# Create monitoring directory for prediction logs
+RUN mkdir -p monitoring
+
+EXPOSE 8000
+
+# Health check — Docker and Kubernetes use this to confirm the container is alive
+HEALTHCHECK --interval=30s --timeout=10s --start-period=15s --retries=3 \
+    CMD python -c "import urllib.request; urllib.request.urlopen('http://localhost:8000/health')" || exit 1
+
+CMD ["python", "src/inference_server.py"]

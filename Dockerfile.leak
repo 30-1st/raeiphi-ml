@@ -1,0 +1,45 @@
+# RAEIPHI — Leak Detection Inference Server
+# TensorFlow Autoencoder + Binary Classifier via FastAPI
+#
+# Build:  docker build -f Dockerfile.leak -t raeiphi-leak .
+# Run:    docker run -p 8002:8002 raeiphi-leak
+
+FROM python:3.12-slim
+
+WORKDIR /app
+
+# System deps
+RUN apt-get update && apt-get install -y --no-install-recommends \
+    build-essential \
+    && rm -rf /var/lib/apt/lists/*
+
+# Python deps — TensorFlow CPU
+RUN pip install --no-cache-dir \
+    tensorflow-cpu \
+    fastapi==0.115.0 \
+    "uvicorn[standard]==0.30.0" \
+    numpy \
+    scikit-learn \
+    pydantic
+
+# Copy model weights and feature config
+COPY models/leak_autoencoder.keras models/
+COPY models/leak_classifier.keras models/
+COPY models/leak_results.json models/
+COPY data/leak_feature_config.json data/
+
+# Copy server code
+COPY src/__init__.py src/
+COPY src/leak_inference_server.py src/
+COPY src/prediction_logger.py src/
+
+# Create monitoring directory
+RUN mkdir -p monitoring
+
+EXPOSE 8002
+
+# Health check
+HEALTHCHECK --interval=30s --timeout=10s --start-period=15s --retries=3 \
+    CMD python -c "import urllib.request; urllib.request.urlopen('http://localhost:8002/health')" || exit 1
+
+CMD ["python", "src/leak_inference_server.py"]

@@ -1,0 +1,30 @@
+# Data files (too large for GitHub)
+data/*.csv
+data/*.parquet
+
+# Model binaries
+models/*.pkl
+models/*.pt
+models/*.keras
+
+# Docker tar exports
+*.tar
+
+# Python cache
+__pycache__/
+*.pyc
+
+# Monitoring databases
+monitoring/*.db
+
+# MLflow
+mlruns/
+mlflow.db
+
+# RAG cache
+rag/embeddings_cache.json
+rag/chunks.json
+
+# OS
+.DS_Store
+Thumbs.db

@@ -1,0 +1,32 @@
+{
+  "Autoencoder": {
+    "accuracy": 0.8686666666666667,
+    "precision": 0.9481361426256077,
+    "recall": 0.78,
+    "f1": 0.8558888076079005,
+    "auc_roc": 0.9625262222222222,
+    "threshold": 0.3940384089946747,
+    "train_time": 28.456834316253662,
+    "architecture": "Dense(128\u219264\u219232\u219264\u2192128\u2192n)",
+    "framework": "tensorflow"
+  },
+  "Classifier": {
+    "accuracy": 1.0,
+    "precision": 1.0,
+    "recall": 1.0,
+    "f1": 1.0,
+    "auc_roc": 1.0,
+    "train_time": 15.59308385848999,
+    "architecture": "Dense(128\u219264\u219232\u21921, sigmoid)",
+    "framework": "tensorflow"
+  },
+  "Random Forest": {
+    "accuracy": 1.0,
+    "precision": 1.0,
+    "recall": 1.0,
+    "f1": 1.0,
+    "auc_roc": 1.0,
+    "train_time": 1.7124106884002686,
+    "framework": "scikit-learn"
+  }
+}
