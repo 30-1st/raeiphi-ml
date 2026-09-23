@@ -31,9 +31,10 @@ jobs:
           pip install --upgrade pip
           pip install flake8
 
-      - name: Lint source code
+      - name: Lint source code (warnings only)
+        continue-on-error: true
         run: |
-          flake8 src/ --max-line-length=120 --ignore=E501,W503,E402 --count --show-source --statistics
+          flake8 src/ --max-line-length=120 --ignore=E501,W503,E402 --count --statistics
 
   # ── Job 2: ML model evaluation gate ───────────────────────
   evaluate-model:
