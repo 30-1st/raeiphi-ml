@@ -147,6 +147,8 @@ jobs:
           "
 
   # ── Job 3: Build and push Docker images ───────────────────
+  # Only runs when model files are present (e.g. via GitHub Releases
+  # or when you add them to the repo). Skips gracefully otherwise.
   build-images:
     runs-on: ubuntu-latest
     needs: evaluate-model
@@ -157,7 +159,24 @@ jobs:
     steps:
       - uses: actions/checkout@v4
 
+      - name: Check if model files exist
+        id: check-models
+        run: |
+          if [ -f models/best_pytorch_model.pt ] && [ -f data/feature_config.json ]; then
+            echo "occupancy_ready=true" >> $GITHUB_OUTPUT
+          else
+            echo "::warning::Occupancy model files not in repo — skipping Docker build"
+            echo "occupancy_ready=false" >> $GITHUB_OUTPUT
+          fi
+          if [ -f models/leak_autoencoder.keras ] && [ -f models/leak_classifier.keras ]; then
+            echo "leak_ready=true" >> $GITHUB_OUTPUT
+          else
+            echo "::warning::Leak model files not in repo — skipping Docker build"
+            echo "leak_ready=false" >> $GITHUB_OUTPUT
+          fi
+
       - name: Log in to GitHub Container Registry
+        if: steps.check-models.outputs.occupancy_ready == 'true' || steps.check-models.outputs.leak_ready == 'true'
         uses: docker/login-action@v3
         with:
           registry: ${{ env.REGISTRY }}
@@ -165,6 +184,7 @@ jobs:
           password: ${{ secrets.GITHUB_TOKEN }}
 
       - name: Build and push occupancy image
+        if: steps.check-models.outputs.occupancy_ready == 'true'
         run: |
           IMAGE=${{ env.REGISTRY }}/${{ env.IMAGE_PREFIX }}/occupancy:${{ github.sha }}
           IMAGE_LATEST=${{ env.REGISTRY }}/${{ env.IMAGE_PREFIX }}/occupancy:latest
@@ -173,6 +193,7 @@ jobs:
           docker push $IMAGE_LATEST
 
       - name: Build and push leak detection image
+        if: steps.check-models.outputs.leak_ready == 'true'
         run: |
           IMAGE=${{ env.REGISTRY }}/${{ env.IMAGE_PREFIX }}/leak:${{ github.sha }}
           IMAGE_LATEST=${{ env.REGISTRY }}/${{ env.IMAGE_PREFIX }}/leak:latest
